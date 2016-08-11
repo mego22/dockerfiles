@@ -20,6 +20,11 @@ RUN yum -y update && yum -y install ruby && yum clean all \
 # skip installing gem documentation
 RUN echo 'gem: --no-rdoc --no-ri' >> "$HOME/.gemrc"
 
+# Install bundler
+ENV BUNDLER_VERSION 1.12.5
+
+RUN gem install bundler --version "$BUNDLER_VERSION"
+
 # Stolen from https://hub.docker.com/r/_/ruby/
 # install things globally, for great justice
 # and don't create ".bundle" in all our apps
