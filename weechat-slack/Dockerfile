@@ -14,12 +14,13 @@ RUN adduser --disabled-password -h ${HOME} user && \
       python \
       py-pip \
       weechat \
+      weechat-aspell \
+      weechat-lua \
       weechat-perl \
-      weechat-python && \
-    pip install websocket-client && \
+      weechat-python \
+      weechat-ruby && \
     wget -P /tmp https://raw.githubusercontent.com/wee-slack/wee-slack/master/wee_slack.py && \
-    wget -P /tmp https://raw.githubusercontent.com/de-vri-es/weechat-autosort/master/autosort.py && \
-    wget -P /tmp https://raw.githubusercontent.com/kattrali/weemoji/master/weemoji.py && \
+    pip install websocket-client && \
     chown -R user: ${HOME}
 
 COPY entrypoint.sh "${HOME}/entrypoint.sh"
