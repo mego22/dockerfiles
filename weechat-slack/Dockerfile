@@ -20,6 +20,7 @@ RUN adduser --disabled-password -h ${HOME} user && \
       weechat-python \
       weechat-ruby && \
     wget -P /tmp https://raw.githubusercontent.com/wee-slack/wee-slack/master/wee_slack.py && \
+    wget -P /tmp https://raw.githubusercontent.com/cmurphy/weechat-shrug/master/shrug.py && \
     pip install websocket-client && \
     chown -R user: ${HOME}
 
