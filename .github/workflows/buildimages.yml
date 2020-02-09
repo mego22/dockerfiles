@@ -16,6 +16,6 @@ jobs:
     - name: Login to Github Registry 
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u "${{ github.actor }}" --password-stdin
     - name: Build the Container image
-      run: cd weechat-slack && docker build . --file Dockerfile --tag weechat-slack:latest
+      run: cd weechat-slack && docker build . --file Dockerfile --tag docker.pkg.github.com/${{ github.repository }}/weechat-slack:latest
     - name: Push image to Github Registry
       run: docker push docker.pkg.github.com/${{ github.repository }}/weechat-slack:latest
