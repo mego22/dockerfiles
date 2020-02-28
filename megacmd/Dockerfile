@@ -10,8 +10,9 @@ LABEL maintainer "David James <david@mego22.net>"
 
 ENV MEGACMD_URL="https://mega.nz/linux/MEGAsync/Debian_9.0/amd64/"
 
-ADD entrypoint.sh /usr/local/bin
+COPY entrypoint.sh /usr/local/bin
 
+# hadolint ignore=DL3003,DL3008,DL3015,DL3027
 RUN apt-get update && \
     apt-get install -y curl gnupg2 && \
     cd /tmp && \
