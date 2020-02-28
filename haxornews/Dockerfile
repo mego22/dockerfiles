@@ -12,8 +12,11 @@ FROM python:3
 LABEL maintainer "David James <david@mego22.net>"
 LABEL org.label-schema.url="https://github.com/donnemartin/haxor-news"
 
-ADD entrypoint.sh /usr/local/bin
+ENV VERSION=0.4.2
 
-RUN pip install haxor-news
+COPY entrypoint.sh /usr/local/bin
+
+RUN pip install haxor-news==${VERSION}
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
