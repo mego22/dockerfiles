@@ -1,11 +1,25 @@
 .DEFAULT_GOAL := help
 
-REGISTRY := docker.pkg.github.com
-OWNER := mego22
+#REGISTRY := ""
+REPO := "mego22"
+VERSION := $(shell git log -n1 --format=format:"%H" | cut -c -7)
+LATEST := "true"
+
+check_defined = \
+				$(strip $(foreach 1,$1, \
+				$(call __check_defined,$1,$(strip $(value 2)))))
+__check_defined = \
+				  $(if $(value $1),, \
+				  $(error Undefined $1$(if $2, ($2))$(if $(value @), \
+				  required by target `$@')))
 
 .PHONY: build
 build: ## Build an image (DIR=utility)
-	@cd ${DIR} && docker build --rm --force-rm -t ${REPO}/${DIR}:latest -t $(REGISTRY)/${REPO}/${DIR}:latest .
+	@:$(call check_defined, DIR, directory of the Dockefile)
+	@cd ${DIR} && docker build --rm --force-rm -t ${REPO}/${DIR}:${VERSION} .
+	@if [ "${LATEST}" = "true" ]; then \
+		docker tag ${REPO}/${DIR}:${VERSION} ${REPO}/${DIR}:latest; \
+	fi
 
 .PHONY: git_build
 gha_build: ## Used with Github Actions to build the images that where added or modified on a merge to master
@@ -17,7 +31,12 @@ lint_dockerfile: ## Lint your Dockerfiles (DIR=utility)
 
 .PHONY: push
 push: ## Push images to registry (IMAGE=utility)
-	@docker push $(REGISTRY)/${REPO}/${IMAGE}:latest
+	@:$(call check_defined, IMAGE, Image to push)
+	@docker push ${REPO}/${IMAGE}:${VERSION}
+	@if [ "${LATEST}" = "true" ]; then \
+		docker push ${REPO}/${IMAGE}:latest; \
+	fi
+
 
 .PHONY: test
 test: ## Run tests on the repo
