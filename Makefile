@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-#REGISTRY := ""
+REGISTRY := "ghcr.io"
 REPO := "mego22"
 VERSION := $(shell git log -n1 --format=format:"%H" | cut -c -7)
 LATEST := "true"
