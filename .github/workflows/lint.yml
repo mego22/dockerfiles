@@ -1,30 +1,79 @@
 ---
-name: Docker Image CI
+name: Lint repo
 
 on: [push]
 
 jobs:
 
-  build:
+  build_matrix:
 
     runs-on: ubuntu-latest
 
+    outputs:
+      matrix: ${{ steps.build-matrix.outputs.matrix }}
+
     steps:
-      - uses: actions/checkout@v1
-      - name: whats changed
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Check for changes
+        id: diff
         run: |
-          # See https://github.community/t/check-pushed-file-changes-with-git-diff-tree-in-github-actions/17220/10
-          if [ $GITHUB_BASE_REF ]; then
-            # Pull Request
-            git fetch origin $GITHUB_BASE_REF --depth=1
-            export DIFF=$( git diff --name-only origin/$GITHUB_BASE_REF $GITHUB_SHA )
-            echo "Diff between origin/$GITHUB_BASE_REF and $GITHUB_SHA"
-          else
-            # Push
-            git fetch origin ${{ github.event.before }} --depth=1
-            export DIFF=$( git diff --name-only ${{ github.event.before }} $GITHUB_SHA )
-            echo "Diff between ${{ github.event.before }} and $GITHUB_SHA"
-          fi
+          PRIMARY_BRANCH="master"
+          CURRENT_COMMIT=$( git log --pretty=format:%H origin/$PRIMARY_BRANCH.. | head -n 1 )
+          export DIFF=$( git diff --name-only origin/$PRIMARY_BRANCH $CURRENT_COMMIT )
+
           echo "$DIFF"
-          # Escape newlines (replace \n with %0A)
+
           echo "::set-output name=diff::$( echo "$DIFF" | sed ':a;N;$!ba;s/\n/%0A/g' )"
+
+      - name: Set matrix for build
+        id: build-matrix
+        run: |
+          DIFF="${{ steps.diff.outputs.diff }}"
+          JSON="{\"include\":["
+
+          while read path; do
+            # Set $directory to substring before /
+            image="$( echo $path | cut -d'/' -f1 -s )"
+
+            if [ -z "$image" ]; then
+              continue # Exclude root directory
+            elif [ "$image" == .github ]; then
+              continue # Exclude .github directory
+            fi
+
+            # Add build to the matrix only if it is not already included
+            JSONline="{\"image\": \"$image\"},"
+            if [[ "$JSON" != *"$JSONline"* ]]; then
+              JSON="$JSON$JSONline"
+            fi
+          done <<< "$DIFF"
+
+          # Remove last "," and add closing brackets
+          if [[ $JSON == *, ]]; then
+            JSON="${JSON%?}"
+          fi
+          JSON="$JSON]}"
+          echo $JSON
+
+          # Set output
+          echo "::set-output name=matrix::$( echo "$JSON" )"
+
+  lint:
+    needs: build_matrix
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix: ${{fromJson(needs.build_matrix.outputs.matrix)}}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
+      - name: Lint ${{ matrix.image }}
+        run: |
+          docker run --rm -i \
+            ghcr.io/hadolint/hadolint < ${{ matrix.image }}/Dockerfile
